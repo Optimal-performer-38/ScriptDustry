@@ -1,1 +1,2 @@
-a random test project in js/html/css.
+a random project in js/html/css.
+uses mindustry sprite assets for the meanwhile...
