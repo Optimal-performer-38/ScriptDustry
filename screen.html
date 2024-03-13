@@ -1,0 +1,215 @@
+<html>
+  <head>
+<meta charset='UTF-8'>
+<meta name="viewport" content="width=device-width, height=device-height, initial-scale=1.0">
+<style>
+
+#canvasScreen{
+ 
+  position: relative ;
+  display:flex;
+  margin-left:auto;
+ 
+}
+canvas{
+  width:100%;
+
+  position: absolute;
+  left:0;
+  top:0;
+}
+</style>
+    <title>
+     basic simplex2 noise 
+    </title>
+  </head>
+  <body>
+ 
+   
+    <div id="canvasScreen">
+    <canvas id="static" 
+    style="background-color:#595959;"
+     width="550" height="550"></canvas>
+     <canvas id="moving"
+     width="550" height="550"></canvas>
+  </div>
+  
+    <script src='perlin.js'>//very noice library. It has both perlin and simplex.</script>
+    <script>
+var canvas=document.getElementById("static");
+var ui=document.getElementById("moving");
+
+var c1=canvas.getContext('2d');
+var c2=ui.getContext('2d');
+let offsetx=Math.floor(Math.random()*6000); 
+let offsety=Math.floor(Math.random()*6000);
+let size=32;   //texture size. 32 px is actual size.The larger the faster.
+let loaded=0;
+let x=0
+let y=0;
+let iCount=0;
+let floor=0;
+let ox=0;
+let oy=0;
+
+let begin=0;
+var cell1=["textures/deep-water.png","textures/shallow-water.png","textures/sand-floor.png","textures/grass3.png","textures/shrubs1.png","textures/dirt-wall1.png","textures/gamma.png"];
+var bank = []; 
+for (var i = 0; i < cell1.length; i++) {
+  (function (index) {
+    var img = new Image();
+    img.src = cell1[index];
+    img.onload = function(){
+    bank[index] = img;
+    iCount++;
+   if (iCount==cell1.length){move();begin=2};
+   // console.log("image " + index+" "+iCount);
+    };
+    
+  })(i);
+}
+   let normalize=1/size;
+   let joystickX=canvas.width*0.2
+   let joystickY=canvas.height*0.8
+   let scale=0.04*normalize;
+   let falloffx=0;
+   let falloffy=0;
+   
+ 
+   let prox=0;
+   let mapSize=3000;
+   //smaller looks better for some reason. U can choose 0-1 below to scale the radial if you'd like.
+   let radial = 1/ Math.sqrt(Math.abs((mapSize - (canvas.width / 2))**2 + (mapSize - (canvas.height / 2))**2));
+ 
+  // let spread=2*size;(Falloff is optional, random stuff messes with map consistency
+  
+ //movement
+
+ 
+let unitSize=32;
+let spin=0;
+let spun=0;
+var midx=(canvas.width/2);
+var midy=(canvas.height/2);
+let movex=midx;
+let movey=midy;
+
+   function move(){
+ y=0;
+   for (x=0;y<=canvas.height;x=x+size){
+   if (x>=canvas.width)
+   {y=y+size;x=0};
+   if (y>canvas.height){
+     
+  };
+  // falloffx= (Math.random()*spread*2)-spread;
+  // falloffy= (Math.random()*spread*2)-spread;
+  prox = 1 - (radial* Math.sqrt(Math.abs(((x) - (canvas.width / 2))**2 + ((y) - (canvas.height / 2))**2)));
+
+  prox=prox;//set to 1  to not be finite. 
+  ox=(offsetx+x+falloffx)*scale;
+  oy=(offsety+y+falloffy)*scale;
+      val=prox*((1+noise.simplex2(ox,oy))*0.5);
+      
+      if      (val >= 0.8){floor=5}
+      else if (val >= 0.7){floor=4}
+      else if (val >= 0.5){floor=3}
+      else if (val>=0.2){floor=2}
+      else if (val>=0.15){floor=1}
+      else    {floor=0};
+     
+    
+    
+     
+      c1.drawImage(bank[floor],x,y,size,size);
+ };
+ };
+ 
+ function player(){
+      c2.shadowColor='rgba(255,255,255,0)'
+      c2.beginPath();
+      c2.clearRect(0,0,canvas.width,canvas.height);
+      c2.lineWidth=1;
+      c2.fillStyle="#000000";
+      c2.font='20px monospace';
+      c2.fillText(Math.floor(posX)+','+Math.floor(posY)*-1,canvas.width*0.85,30,100);
+      c2.lineWidth=10;
+      c2.strokeStyle="#e0ebf4cc";
+      c2.arc(joystickX,joystickY,90,0,2*Math.PI);
+      c2.stroke();
+      
+      
+      c2.beginPath();
+      c2.arc(touchx,touchy,30,0,6.28);
+      c2.fillStyle='#d0e6eb';
+      c2.fill();
+      
+      c2.shadowColor='rgba(0,0,0,0.30)';
+      c2.shadowBlur=2;
+      c2.shadowOffsetX=-13;
+      c2.shadowOffsetY=20;
+      
+      c2.save();
+      c2.translate(movex,movey);
+      c2.rotate(spin*Math.PI/180);
+      c2.drawImage(bank[6],0-unitSize/2,0-unitSize/2, unitSize,unitSize);
+      c2.restore();
+      
+ };
+let switched=1;
+let vlength=1;
+var touchx=joystickX;
+var touchy=joystickY;
+
+let posX=0;
+let posY=0;
+
+ ui.addEventListener('touchmove', function (press){
+  
+  var touch= press.touches[0];
+  var rect=ui.getBoundingClientRect();
+ touchx=(0.5*ui.width)+((ui.width/rect.width)*(touch.clientX -(0.5*ui.offsetWidth+rect.left)));
+ touchy=(0.5*ui.height)+((ui.height/rect .height)*(touch.clientY -(0.5*ui.offsetHeight+rect.top)));
+//scale touches
+
+  vlength=Math.floor(Math.abs(Math.hypot(touchx-joystickX,touchy-joystickY)));
+  
+    if (vlength<120){
+  spin=180-(180/Math.PI)*(Math.atan2(touchx-joystickX,touchy-joystickY));
+  spun=Math.atan2(touchx-joystickX,touchy-joystickY);
+  press.preventDefault();
+  switched=0;}
+  
+   if(vlength>=120){
+     switched=1;
+     press.stopPropagation();};
+ });
+ setInterval(function (){
+   if (switched==0&&begin==2){
+ movex+=Math.sin(spun)*5;
+ movey+=Math.cos(spun)*5;
+ player();
+ if(movex>canvas.width){movex-=canvas.width;offsetx+=canvas.width;move()}
+ if(movex<0){movex+=canvas.width;offsetx-=canvas.width;move()}
+ if(movey>canvas.height){movey-=canvas.height;offsety+=canvas.height;move()}
+ if(movey<0){movey+=canvas.height;offsety-=canvas.height;move()};
+ posX+=Math.sin(spun)*5*(size/canvas.width);
+ posY+=Math.cos(spun)*5*(size/canvas.height);
+}
+if (switched==1&&begin==2){
+  touchx=joystickX;
+  touchy=joystickY;
+  player()}
+ },30);
+ui.addEventListener('touchend', function(){
+  touchx=joystickX;
+  touchy=joystickY;
+  player();
+ switched=1;
+ //testing...let sizing=Math.min(window.innerWidth,window.innerHeight);
+  //console.log(sizing);Canvas.style.width=sizing+'px';
+
+});
+    </script>
+  </body>
+</html>
